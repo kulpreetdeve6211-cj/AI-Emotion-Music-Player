@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+﻿from flask import Flask, request, jsonify
 from flask_cors import CORS
 import cv2
 import base64
@@ -10,7 +10,7 @@ import json
 from dotenv import load_dotenv
 from datetime import datetime
 
-# Import emotion detector (mock initially, then CNN)
+# Import emotion detector
 from model.emotion_detector import EmotionDetector
 
 load_dotenv()
@@ -45,6 +45,7 @@ def health_check():
 
 # ==================== EMOTION DETECTION ====================
 @app.route('/emotion', methods=['POST'])
+@app.route('/detect', methods=['POST'])
 def detect_emotion():
     """
     Main emotion detection endpoint
@@ -73,6 +74,8 @@ def detect_emotion():
         # Detect emotion
         emotion, confidence = emotion_detector.predict(image_array)
         
+        print(f"[DETECT] Emotion: {emotion}, Confidence: {confidence:.2f}")
+        
         return jsonify({
             'emotion': emotion,
             'confidence': float(confidence),
@@ -81,6 +84,7 @@ def detect_emotion():
         }), 200
         
     except Exception as e:
+        print(f"[ERROR] {str(e)}")
         return jsonify({
             'error': str(e),
             'status': 'failed'
@@ -153,11 +157,20 @@ def internal_error(error):
 
 # ==================== MAIN ====================
 if __name__ == '__main__':
+    print("=" * 60)
+    print("✅ EMOTION MUSIC PLAYER - BACKEND STARTED")
+    print("=" * 60)
     print(f"Base directory: {BASE_DIR}")
-    print(f"Loading from: {os.path.join(BASE_DIR, 'music', 'playlists.json')}")
+    print(f"Available emotions: {list(PLAYLISTS.keys())}")
+    print(f"Endpoints:")
+    print(f"  - POST /emotion or /detect (emotion detection)")
+    print(f"  - GET /playlist/<emotion> (get playlist)")
+    print(f"  - GET /health (health check)")
+    print(f"  - GET /test/emotions (test endpoint)")
+    print("=" * 60)
+    
     app.run(
         host='0.0.0.0',
         port=int(os.getenv('FLASK_PORT', 5000)),
         debug=os.getenv('FLASK_ENV', 'development') == 'development'
     )
-    

@@ -282,3 +282,35 @@ chrome.storage.onChanged.addListener((changes, area) => {
         loadPlaylist(changes.currentMood.newValue);
     }
 });
+
+// ===============================
+// Time slider logic
+// ===============================
+
+const slider = document.getElementById("timeSlider");
+const timeText = document.getElementById("timeValue");
+
+// Load saved value
+chrome.storage.local.get(["rescanTime"], (result) => {
+  const time = result.rescanTime || 5;
+  slider.value = time;
+  timeText.textContent = time;
+});
+
+// Update on change
+slider.addEventListener("input", () => {
+  const value = Number(slider.value);
+
+  timeText.textContent = value;
+
+  // Save in storage
+  chrome.storage.local.set({ rescanTime: value });
+
+  // 🔥 IMPORTANT: tell background to update timer instantly
+  chrome.runtime.sendMessage({
+    action: "updateTimer",
+    time: value
+  });
+
+  console.log("Rescan time updated:", value);
+});

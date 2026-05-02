@@ -1,102 +1,89 @@
-import numpy as np
+﻿import numpy as np
 import cv2
-from PIL import Image
-import random
+import os
+import warnings
+warnings.filterwarnings('ignore')
 
 class EmotionDetector:
-    """
-    Emotion Detection using CNN
-    Phase 1: Mock implementation with random predictions
-    Phase 2: Real CNN model implementation
-    """
+    """Improved Emotion Detector with Better Logic"""
     
-    def __init__(self, model_path=None):
-        self.emotions = ['happy', 'sad', 'angry', 'neutral', 'surprise']
-        self.model_path = model_path
+    def __init__(self):
+        self.emotions_list = ["angry", "sad", "happy", "surprise", "neutral"]
+        print("✅ Emotion Detector initialized")
         
-        # Phase 1: Mock detection
-        self.use_mock = True
-        
-        if model_path and not self.use_mock:
-            self.load_model(model_path)
-    
     def predict(self, image_array):
         """
-        Predict emotion from image array
-        
-        Args:
-            image_array: numpy array of image (H, W, 3)
-            
-        Returns:
-            emotion: str (emotion label)
-            confidence: float (0-1)
-        """
-        
-        if self.use_mock:
-            return self._mock_prediction(image_array)
-        else:
-            return self._cnn_prediction(image_array)
-    
-    def _mock_prediction(self, image_array):
-        """
-        Mock prediction - returns random emotion
-        Replace this with real CNN model later
-        """
-        # Simulate processing
-        emotion = random.choice(self.emotions)
-        confidence = random.uniform(0.85, 0.98)
-        
-        print(f"[MOCK] Detected emotion: {emotion} (confidence: {confidence:.2f})")
-        
-        return emotion, confidence
-    
-    def _cnn_prediction(self, image_array):
-        """
-        Real CNN prediction (implement in Phase 2)
+        Improved emotion detection with multiple features
         """
         try:
-            import torch
-            import torchvision.transforms as transforms
+            # Convert to grayscale
+            if len(image_array.shape) == 3:
+                gray = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
+            else:
+                gray = image_array
             
-            # Convert to tensor
-            image = Image.fromarray(image_array.astype('uint8'))
+            # Calculate features
+            brightness = np.mean(gray)
+            contrast = np.std(gray)
             
-            # Preprocess
-            transform = transforms.Compose([
-                transforms.Resize((48, 48)),
-                transforms.Grayscale(),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.5], std=[0.5])
-            ])
+            # Edge detection
+            edges = cv2.Canny(gray, 50, 150)
+            edge_count = np.count_nonzero(edges)
+            edge_ratio = edge_count / (gray.shape[0] * gray.shape[1]) * 100
             
-            image_tensor = transform(image).unsqueeze(0)
+            # Color distribution
+            histogram = cv2.calcHist([gray], [0], None, [256], [0, 256])
             
-            # Model prediction
-            with torch.no_grad():
-                outputs = self.model(image_tensor)
-                probabilities = torch.nn.functional.softmax(outputs, dim=1)
-                confidence, predicted = torch.max(probabilities, 1)
+            # Determine emotion based on multiple features
+            emotion = "neutral"
+            confidence = 0.50
             
-            emotion = self.emotions[predicted.item()]
-            confidence = confidence.item()
+            # HAPPY: Very bright + High contrast + moderate edges
+            if brightness > 170 and contrast > 45:
+                emotion = "happy"
+                confidence = 0.80
+            
+            # SAD: Dark + Low contrast + few edges
+            elif brightness < 90 and contrast < 35 and edge_ratio < 2:
+                emotion = "sad"
+                confidence = 0.75
+            
+            # ANGRY: Medium brightness + High contrast + Many edges
+            elif brightness > 100 and contrast > 55 and edge_ratio > 3.5:
+                emotion = "angry"
+                confidence = 0.73
+            
+            # SURPRISE: Bright + Medium contrast + Few edges
+            elif brightness > 140 and contrast < 50 and edge_ratio < 2.5:
+                emotion = "surprise"
+                confidence = 0.70
+            
+            # NEUTRAL: Everything moderate
+            elif 100 < brightness < 140 and 35 < contrast < 50:
+                emotion = "neutral"
+                confidence = 0.65
+            
+            # Default fallback
+            else:
+                if brightness > 150:
+                    emotion = "happy"
+                    confidence = 0.60
+                elif brightness < 100:
+                    emotion = "sad"
+                    confidence = 0.60
+                else:
+                    emotion = "neutral"
+                    confidence = 0.55
+            
+            print(f"[DETECTOR] {emotion.upper()} | Brightness: {brightness:.1f}, Contrast: {contrast:.1f}, Edges: {edge_ratio:.2f}% | Confidence: {confidence:.2f}")
             
             return emotion, confidence
             
         except Exception as e:
-            print(f"Error in CNN prediction: {e}")
+            print(f"[ERROR] {e}")
             return "neutral", 0.5
-    
-    def load_model(self, model_path):
-        """Load pre-trained CNN model"""
-        try:
-            import torch
-            self.model = torch.load(model_path)
-            self.model.eval()
-            self.use_mock = False
-            print(f"Model loaded from {model_path}")
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            self.use_mock = True
 
-# Export for use in Flask app
-__all__ = ['EmotionDetector']
+
+if __name__ == "__main__":
+    detector = EmotionDetector()
+    print("✅ Ready!")

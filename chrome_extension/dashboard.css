@@ -358,3 +358,22 @@ h1 {
 body, .card, .sidebar, .tab-btn, .song-item {
   transition: all 0.3s ease;
 }
+
+/* =========================
+   TIMER SLIDER
+========================= */
+
+.timer-section {
+  margin-top: 10px;
+}
+
+#timeSlider {
+  width: 100%;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+#timeValue {
+  color: var(--accent);
+  font-weight: 600;
+}

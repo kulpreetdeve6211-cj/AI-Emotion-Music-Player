@@ -96,6 +96,7 @@
       <h1>⚙ Settings</h1>
 
     <div class="card">
+
   <label>
     <input type="checkbox" id="autoDetect">
     Enable Auto Detection
@@ -109,7 +110,28 @@
 
   <br><br>
 
+  <!-- 🔥 RESCAN TIMER -->
+  <div class="timer-section">
+    <h3>Rescan Timer</h3>
+
+    <input 
+      type="range" 
+      id="timeSlider" 
+      min="1" 
+      max="30" 
+      value="5"
+    >
+
+    <p>
+      Rescan every 
+      <strong><span id="timeValue">5</span></strong> minutes
+    </p>
+  </div>
+
+  <br>
+
   <button id="clearData">Clear History</button>
+
 </div>
     </div>
 
